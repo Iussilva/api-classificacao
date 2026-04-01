@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ourobras — Acesso</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #F5F2EC;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 48px 40px 40px;
+      width: 100%;
+      max-width: 380px;
+    }
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo img { height: 48px; }
+    h1 { font-size: 1.1rem; font-weight: 600; color: #1A1612; text-align: center; margin-bottom: 4px; }
+    .sub { font-size: .85rem; color: #8A8078; text-align: center; margin-bottom: 28px; }
+    label { display: block; font-size: .8rem; font-weight: 500; color: #4A4440; margin-bottom: 5px; }
+    input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid #DDD8D0; border-radius: 8px;
+      font-size: .9rem; color: #1A1612;
+      outline: none; transition: border-color .15s;
+      margin-bottom: 16px;
+    }
+    input:focus { border-color: #A8762A; }
+    .btn {
+      width: 100%; padding: 12px;
+      background: #A8762A; color: #fff;
+      border: none; border-radius: 8px;
+      font-size: .95rem; font-weight: 600;
+      cursor: pointer; transition: background .15s;
+      margin-top: 4px;
+    }
+    .btn:hover { background: #8A6020; }
+    .btn:disabled { background: #C8B898; cursor: not-allowed; }
+    .erro {
+      background: #FEF2F2; color: #991B1B;
+      border-radius: 8px; padding: 10px 14px;
+      font-size: .83rem; margin-bottom: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <img src="/img/logo.jpg" alt="Ourobras">
+    </div>
+    <h1>Acesso restrito</h1>
+    <p class="sub">Entre com suas credenciais para continuar</p>
+    <div class="erro" id="erroMsg"></div>
+    <label>Usuário</label>
+    <input type="text" id="usuario" autocomplete="username" placeholder="seu usuário">
+    <label>Senha</label>
+   <input type="password" id="senha" autocomplete="current-password" placeholder="••••••••">
+    <button class="btn" id="btnEntrar">Entrar</button>
+  </div>
+
+  <script>
+  // Eventos sem atributos inline — compatível com CSP
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('senha').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') entrar();
+    });
+    document.getElementById('btnEntrar').addEventListener('click', entrar);
+  });
+
+  // Se já tem token válido, vai direto para o painel
+  var token = localStorage.getItem('ourobras_token');
+  if (token) window.location.href = '/index.html';
+
+  async function entrar() {
+    var usuario = document.getElementById('usuario').value.trim();
+    var senha = document.getElementById('senha').value;
+    var btn = document.getElementById('btnEntrar');
+    var erro = document.getElementById('erroMsg');
+
+    if (!usuario || !senha) {
+      mostrarErro('Preencha usuário e senha.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
+    erro.style.display = 'none';
+
+    try {
+      var resp = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, senha })
+      });
+      var data = await resp.json();
+
+      if (!resp.ok) {
+        mostrarErro(data.erro || 'Credenciais inválidas.');
+        return;
+      }
+
+      localStorage.setItem('ourobras_token', data.token);
+      window.location.href = '/index.html';
+
+    } catch (e) {
+      mostrarErro('Erro de conexão com o servidor.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+    }
+  }
+
+  function mostrarErro(msg) {
+    var el = document.getElementById('erroMsg');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+</script>
+</body>
+</html>
