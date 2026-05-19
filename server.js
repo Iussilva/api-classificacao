@@ -86,8 +86,20 @@ const loginLimiter = rateLimit({
 });
 app.use('/api/auth/login', loginLimiter);
 
-// ── Arquivos estáticos (NÃO incluir /login.html aqui — será servido aberto) ─
-app.use(express.static(path.join(__dirname, 'public')));
+// ── Arquivos estáticos do front-end ─────────────────────────
+const publicPath = path.join(__dirname, 'public');
+
+app.use('/css', express.static(path.join(publicPath, 'css')));
+app.use('/js', express.static(path.join(publicPath, 'js')));
+app.use('/img', express.static(path.join(publicPath, 'img')));
+app.use('/assets', express.static(path.join(publicPath, 'assets')));
+app.use('/fonts', express.static(path.join(publicPath, 'fonts')));
+
+app.use(express.static(publicPath));
+
+app.get('/', function (req, res) {
+  res.sendFile(path.join(publicPath, 'index.html'));
+});
 
 // ════════════════════════════════════════════════════════════
 // MIDDLEWARE DE AUTENTICAÇÃO — JWT obrigatório em /api/
