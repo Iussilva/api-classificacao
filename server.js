@@ -20,6 +20,10 @@ const path = require('path');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // ── Headers de segurança HTTP ────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
