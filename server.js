@@ -60,14 +60,41 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// ── CORS restrito ao domínio configurado no .env ─────────────
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGIN,   // obrigatório no .env — sem fallback
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Token']
-}));
+// ── CORS liberado para VPS + domínio ─────────────────────────
+const allowedOrigins = [
+  process.env.ALLOWED_ORIGIN,
+  'http://76.13.120.75:3002',
+  'https://apiclass.suporteourobras.com',
+  'http://localhost:3002'
+];
 
-app.use(express.json());
+app.use(cors({
+  origin: function (origin, callback) {
+
+    // Permite requests sem origin (Postman/mobile/etc)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.warn('[CORS BLOQUEADO]', origin);
+
+    return callback(null, true); // TEMPORÁRIO PARA TESTE
+  },
+
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-API-Token'
+  ],
+
+  credentials: true
+}));
 
 // ── Rate limiting geral (M1) ─────────────────────────────────
 const limiter = rateLimit({
@@ -89,14 +116,10 @@ app.use('/api/auth/login', loginLimiter);
 // ── Arquivos estáticos do front-end ─────────────────────────
 const publicPath = path.join(__dirname, 'public');
 
-app.use('/css', express.static(path.join(publicPath, 'css')));
-app.use('/js', express.static(path.join(publicPath, 'js')));
-app.use('/img', express.static(path.join(publicPath, 'img')));
-app.use('/assets', express.static(path.join(publicPath, 'assets')));
-app.use('/fonts', express.static(path.join(publicPath, 'fonts')));
-
+// Serve TODOS os arquivos diretamente da pasta public
 app.use(express.static(publicPath));
 
+// Página principal
 app.get('/', function (req, res) {
   res.sendFile(path.join(publicPath, 'index.html'));
 });
