@@ -248,6 +248,7 @@ var FABRICANTES_FIXOS = [
   'SG METAIS LTDA',
   'MANTOVANI JOIAS LTDA.',
   'ELLOS GOLD INDUSTRIA E COMERCIO LTDA'
+  'OUROBRAS COMERCIO DE JOIAS LTDA - CP'
 ];
 
 // Monta cláusula IN com os fabricantes fixos (sem parâmetros — nomes fixos)
