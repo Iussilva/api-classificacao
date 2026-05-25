@@ -67,9 +67,7 @@ app.use(helmet({
 // ── CORS liberado para VPS + domínio ─────────────────────────
 const allowedOrigins = [
   process.env.ALLOWED_ORIGIN,
-  'http://76.13.120.75:3002',
-  'https://classificacao.suporteourobras.com',
-  'http://localhost:3002'
+  'https://classificacao.suporteourobras.com'
 ];
 
 app.use(cors({
