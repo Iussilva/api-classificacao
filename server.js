@@ -309,9 +309,9 @@ app.get('/api/ping', async function (req, res) {
     await query('SELECT 1 FROM RDB$DATABASE', []);
     res.json({ status: 'ok', servico: 'Classificacao', hora: new Date().toLocaleTimeString('pt-BR') });
   } catch (err) {
-    // Não expõe detalhes internos do banco para o cliente
-    console.error('[Ping] Erro de conexão com o banco:', err.message);
-    res.status(500).json({ status: 'erro', mensagem: 'Erro ao conectar com o banco de dados.' });
+    // Temporário para debugar o erro de conexão:
+    console.error('[Ping] DETALHES DO ERRO FIREBIRD:', err);
+    res.status(500).json({ status: 'erro', mensagem: 'Erro ao conectar com o banco de dados.', detalhe: err.message });
   }
 });
 
