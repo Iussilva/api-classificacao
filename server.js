@@ -67,9 +67,7 @@ app.use(helmet({
 // ── CORS liberado para VPS + domínio ─────────────────────────
 const allowedOrigins = [
   process.env.ALLOWED_ORIGIN,
-  'http://76.13.120.75:3002',
-  'https://apiclass.suporteourobras.com',
-  'http://localhost:3002'
+  'https://classificacao.suporteourobras.com'
 ];
 
 app.use(cors({
@@ -166,9 +164,9 @@ app.use(autenticar);
 // ════════════════════════════════════════════════════════════════
 
 const fbOptions = {
-  host: process.env.FB_HOST || 'localhost',
+  host: process.env.FB_HOST || 'ourobras_barra.qualyti.inf.br',
   port: parseInt(process.env.FB_PORT) || 3050,
-  database: process.env.FB_DATABASE || 'C:\\Conttroller\\Dados\\gerais.fdb',
+  database: process.env.FB_DATABASE || 'D:\\Conttroller\\Dados\\GERAIS.FDB',
   user: process.env.FB_USER || 'SYSDBA',
   password: process.env.FB_PASSWORD || 'masterkey',
   charset: process.env.FB_CHARSET || 'ISO8859_1',
@@ -319,9 +317,9 @@ app.get('/api/ping', async function (req, res) {
     await query('SELECT 1 FROM RDB$DATABASE', []);
     res.json({ status: 'ok', servico: 'Classificacao', hora: new Date().toLocaleTimeString('pt-BR') });
   } catch (err) {
-    // Não expõe detalhes internos do banco para o cliente
-    console.error('[Ping] Erro de conexão com o banco:', err.message);
-    res.status(500).json({ status: 'erro', mensagem: 'Erro ao conectar com o banco de dados.' });
+    // Temporário para debugar o erro de conexão:
+    console.error('[Ping] DETALHES DO ERRO FIREBIRD:', err);
+    res.status(500).json({ status: 'erro', mensagem: 'Erro ao conectar com o banco de dados.', detalhe: err.message });
   }
 });
 
