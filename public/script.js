@@ -874,6 +874,104 @@ function addMsg(texto, tipo) {
       } catch (e) { el.classList.remove('loading'); txt.textContent = 'Erro ao gerar análise.'; }
     } */
 
+
+/* ════════════════════════════════════════════════
+   AUDITORIA — ESTOQUE GRADE / CÓDIGO BARRAS
+════════════════════════════════════════════════ */
+var auditoriaDados = [];
+
+function dataHojeInput() {
+  var hoje = new Date();
+  return hoje.getFullYear() + '-' +
+    String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
+    String(hoje.getDate()).padStart(2, '0');
+}
+
+async function buscarAuditoria() {
+  var loja = document.getElementById('aLoja').value || 1;
+  var data = document.getElementById('aData').value || dataHojeInput();
+  var tbody = document.getElementById('tbodyAuditoria');
+  var resumo = document.getElementById('auditoriaResumo');
+
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px"><div class="spinner"></div><br>Consultando auditoria...</td></tr>';
+  resumo.textContent = 'Consultando dados no Firebird...';
+
+  try {
+    var p = new URLSearchParams();
+    p.set('interno_est', loja);
+    p.set('data', data);
+
+    var d = await apiFetch('/api/auditoria/estoque-grade?' + p).then(function (r) { return r.json(); });
+
+    if (d.erro) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--danger)">' + d.erro + '</td></tr>';
+      resumo.textContent = 'Erro na consulta.';
+      return;
+    }
+
+    auditoriaDados = d.auditoria || [];
+
+    document.getElementById('aKpiItens').textContent = (d.total_itens || 0).toLocaleString('pt-BR');
+    document.getElementById('aKpiSaldo').textContent = fmt(d.total_saldo || 0, 3) + ' g';
+    document.getElementById('aKpiValor').textContent = 'R$ ' + fmt(d.total_valor || 0, 2);
+    document.getElementById('aKpiData').textContent = data.split('-').reverse().join('/');
+
+    resumo.textContent = (d.total_itens || 0).toLocaleString('pt-BR') + ' item(ns) encontrados na loja ' + loja + '.';
+    renderTabelaAuditoria(auditoriaDados);
+
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--danger)">Erro: ' + e.message + '</td></tr>';
+    resumo.textContent = 'Falha ao consultar auditoria.';
+  }
+}
+
+function renderTabelaAuditoria(dados) {
+  var tbody = document.getElementById('tbodyAuditoria');
+
+  if (!dados.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-3)">Nenhum item encontrado.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dados.map(function (r) {
+    return '<tr>' +
+      '<td><strong>' + (r.CODIGO || '') + '</strong></td>' +
+      '<td>' + (r.CODIGO_BARRAS || '') + '</td>' +
+      '<td>' + (r.NOME || '') + '</td>' +
+      '<td>' + (r.UNIDADE || '') + '</td>' +
+      '<td>' + (r.GRADE || '') + '</td>' +
+      '<td style="text-align:right" class="money">' + fmt(r.SD_ATUAL, 3) + '</td>' +
+      '<td style="text-align:right">R$ ' + fmt(r.VL_COMPRA, 2) + '</td>' +
+      '<td style="text-align:right" class="money">R$ ' + fmt(r.TOTAL_P, 2) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function filtrarAuditoria(q) {
+  q = (q || '').toLowerCase();
+  if (!q) {
+    renderTabelaAuditoria(auditoriaDados);
+    return;
+  }
+
+  var filtrado = auditoriaDados.filter(function (r) {
+    return String(r.CODIGO || '').toLowerCase().includes(q) ||
+      String(r.CODIGO_BARRAS || '').toLowerCase().includes(q) ||
+      String(r.NOME || '').toLowerCase().includes(q) ||
+      String(r.GRADE || '').toLowerCase().includes(q);
+  });
+
+  renderTabelaAuditoria(filtrado);
+}
+
+(function iniciarAuditoriaData() {
+  setTimeout(function () {
+    var el = document.getElementById('aData');
+    if (el && !el.value) el.value = dataHojeInput();
+  }, 100);
+})();
+
+
 /* ════════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════════ */

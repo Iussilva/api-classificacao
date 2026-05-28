@@ -38,6 +38,10 @@
         <span class="tab-icon"><i class="fi fi-rr-chat-arrow-grow"></i></span>
         Vendas
       </button>
+      <button class="tab-btn" onclick="mudarAba('auditoria', this)" id="tabBtnAuditoria">
+        <span class="tab-icon"><i class="fi fi-rr-search-alt"></i></span>
+        Auditoria
+      </button>
     </nav>
 
     <div class="topbar-right">
@@ -340,6 +344,124 @@
 
     </div>
   </div><!-- /panel-vendas -->
+
+
+  <!-- ══════════════════════════════════════════════
+     ABA AUDITORIA
+══════════════════════════════════════════════ -->
+  <div class="tab-panel" id="panel-auditoria">
+    <main class="estoque-main">
+
+      <div class="filtros-card">
+        <div class="filtros-header">
+          <div class="chart-title" style="display:flex; align-items:center; gap:6px;">
+            <img src="/img/search.svg" alt="Auditoria" width="18" height="18">
+            <span>Auditoria — Estoque por Grade / Código de Barras</span>
+          </div>
+        </div>
+
+        <div class="aviso-info">
+          Consulta baseada na grade do produto, utilizando a referência vinculada ao <strong>PRODUTO_EST_GRADE</strong>.
+        </div>
+
+        <div class="filtros-row">
+          <div class="field">
+            <label>Loja</label>
+            <select id="aLoja">
+              <option value="1">1 — Barra</option>
+              <option value="3">3 — Marabá</option>
+              <option value="4">4 — Imperatriz</option>
+              <option value="5">5 — Natal</option>
+              <option value="6">6 — Itaigara</option>
+              <option value="8">8 — João Pessoa</option>
+              <option value="9">9 — Fortaleza</option>
+              <option value="10">10 — Aracaju</option>
+              <option value="12">12 — São Luís/Tropical</option>
+              <option value="13">13 — Avenida 7</option>
+              <option value="15">15 — Belém</option>
+              <option value="16">16 — FSA</option>
+              <option value="17">17 — Maceió</option>
+              <option value="18">18 — Recife</option>
+              <option value="19">19 — São Luís/Centro</option>
+              <option value="20">20 — São Luís/Cohab</option>
+              <option value="23">23 — FSA/Getúlio</option>
+              <option value="25">25 — Goiânia</option>
+              <option value="28">28 — Vila Conceição</option>
+              <option value="30">30 — Vila Mariana</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Data Estoque</label>
+            <input type="date" id="aData">
+          </div>
+
+          <button class="btn-primary" onclick="buscarAuditoria()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            Consultar Auditoria
+          </button>
+        </div>
+      </div>
+
+      <div class="kpi-grid-4" style="margin-bottom:20px">
+        <div class="v-kpi">
+          <div class="v-kpi-label">Itens Encontrados</div>
+          <div class="v-kpi-valor" id="aKpiItens">—</div>
+          <div class="v-kpi-sub">com saldo positivo</div>
+        </div>
+        <div class="v-kpi">
+          <div class="v-kpi-label">Saldo Total</div>
+          <div class="v-kpi-valor" id="aKpiSaldo">—</div>
+          <div class="v-kpi-sub">gramas</div>
+        </div>
+        <div class="v-kpi">
+          <div class="v-kpi-label">Valor Total</div>
+          <div class="v-kpi-valor" id="aKpiValor">—</div>
+          <div class="v-kpi-sub">preço de compra</div>
+        </div>
+        <div class="v-kpi">
+          <div class="v-kpi-label">Data Referência</div>
+          <div class="v-kpi-valor" id="aKpiData" style="font-size:1.1rem">—</div>
+          <div class="v-kpi-sub">posição consultada</div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Resultado da Auditoria</div>
+          <div class="chart-sub" id="auditoriaResumo">Aguardando consulta...</div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+          <input type="text" class="v-search" id="filtroAuditoria" placeholder="Filtrar auditoria..." oninput="filtrarAuditoria(this.value)">
+        </div>
+
+        <div class="table-wrap">
+          <table class="dt">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Cód. Barras</th>
+                <th>Produto</th>
+                <th>Un.</th>
+                <th>Grade</th>
+                <th style="text-align:right">Saldo</th>
+                <th style="text-align:right">Vl. Compra</th>
+                <th style="text-align:right">Total</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyAuditoria">
+              <tr><td colspan="8" style="text-align:center;color:var(--text-3)">Clique em Consultar Auditoria.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div><!-- /panel-auditoria -->
 
   <!-- TOAST -->
   <div class="toast" id="toast"></div>

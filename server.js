@@ -301,6 +301,14 @@ function dataHoje() {
     hoje.getFullYear();
 }
 
+
+function dataHojeISO() {
+  var hoje = new Date();
+  return hoje.getFullYear() + '-' +
+    String(hoje.getMonth() + 1).padStart(2, '0') + '-' +
+    String(hoje.getDate()).padStart(2, '0');
+}
+
 // ════════════════════════════════════════════════════════════════
 // ENDPOINTS
 // ════════════════════════════════════════════════════════════════
@@ -1109,6 +1117,88 @@ app.post('/api/ia/analisar-contratos', async function (req, res) {
 });
 
 
+
+// ── AUDITORIA — ESTOQUE POR GRADE / CÓDIGO DE BARRAS ─────────
+app.get('/api/auditoria/estoque-grade', async function (req, res) {
+  try {
+    var internoEst = req.query.interno_est ? parseInt(req.query.interno_est) : 1;
+    var dataRef = req.query.data || dataHojeISO();
+
+    if (!internoEst || internoEst <= 0) {
+      return res.status(400).json({ erro: 'Loja inválida.' });
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dataRef)) {
+      return res.status(400).json({ erro: 'Data inválida. Use YYYY-MM-DD.' });
+    }
+
+    var sql =
+      "WITH BASE AS (" +
+      " SELECT" +
+      "   P.CODIGO," +
+      "   PEG.REFERENCIA AS CODIGO_BARRAS," +
+      "   TRIM(P.NOME) AS NOME," +
+      "   P.UNIDADE," +
+      "   PEG.INTERNO AS INTERNO_PRODUTO_EST_GRADE," +
+      "   TRIM(G.NOME) AS GRADE," +
+      "   PE.INTERNO AS INTERNO_PE" +
+      " FROM PRODUTO_ESTABELECIMENTO PE" +
+      " INNER JOIN PRODUTO P ON P.INTERNO = PE.INTERNO_PRODUTO" +
+      " INNER JOIN PRODUTO_EST_GRADE PEG ON PEG.INTERNO_PRODUTO_EST = PE.INTERNO" +
+      " INNER JOIN GRADE G ON G.INTERNO = PEG.INTERNO_GRADE" +
+      " WHERE PE.INTERNO_EST = " + internoEst +
+      " AND P.ATIVO = 'Ativo'" +
+      " AND P.TIPO = 'Produto'" +
+      " AND PEG.REFERENCIA IS NOT NULL" +
+      ")" +
+      " SELECT" +
+      "   B.CODIGO," +
+      "   B.CODIGO_BARRAS," +
+      "   B.NOME," +
+      "   B.UNIDADE," +
+      "   B.INTERNO_PRODUTO_EST_GRADE," +
+      "   B.GRADE," +
+      "   COALESCE(EST.SALDO_FINAL_PROPRIO, 0) AS SD_ATUAL," +
+      "   COALESCE(PC.PRECO_COMPRA, 0) AS VL_COMPRA," +
+      "   COALESCE(EST.SALDO_FINAL_PROPRIO, 0) * COALESCE(PC.PRECO_COMPRA, 0) AS TOTAL_P" +
+      " FROM BASE B" +
+      " LEFT JOIN SP_POSICAO_ESTOQUE_MOD3(" +
+      "   2," +
+      "   NULL," +
+      "   B.INTERNO_PRODUTO_EST_GRADE," +
+      "   DATE '" + dataRef + "'," +
+      "   DATE '" + dataRef + "'," +
+      "   'Não'" +
+      " ) EST ON 1 = 1" +
+      " LEFT JOIN SP_PRECO_COMPRA2(" +
+      "   B.INTERNO_PE," +
+      "   DATE '" + dataRef + "'" +
+      " ) PC ON 1 = 1" +
+      " WHERE COALESCE(EST.SALDO_FINAL_PROPRIO, 0) > 0" +
+      " ORDER BY B.CODIGO, B.GRADE";
+
+    var cacheKey = 'auditoria_estoque_grade:' + internoEst + ':' + dataRef;
+    var rows = await comCache(cacheKey, async function () {
+      return await query(sql, []);
+    });
+
+    var totalSaldo = rows.reduce(function (s, r) { return s + (parseFloat(r.SD_ATUAL) || 0); }, 0);
+    var totalValor = rows.reduce(function (s, r) { return s + (parseFloat(r.TOTAL_P) || 0); }, 0);
+
+    res.json({
+      auditoria: rows,
+      total_itens: rows.length,
+      total_saldo: totalSaldo,
+      total_valor: totalValor,
+      data_ref: dataRef,
+      interno_est: internoEst
+    });
+  } catch (err) {
+    console.error('[Auditoria Estoque Grade]', err.message);
+    res.status(500).json({ erro: 'Erro interno ao consultar auditoria.' });
+  }
+});
+
 // ── INICIA O SERVIDOR ─────────────────────────────────────────
 var PORT = process.env.PORT || 3002;
 app.listen(PORT, '0.0.0.0', function () {
@@ -1133,7 +1223,8 @@ app.listen(PORT, '0.0.0.0', function () {
   console.log('   POST /api/ia/analisar-estoque');
   console.log('   POST /api/ia/analisar-contratos');
   console.log('   GET  /api/vendas                  ?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD&interno_est=1&fabricante=X&coordenador=Bruno');
-  console.log('   GET  /api/coordenadores\n');
+  console.log('   GET  /api/coordenadores');
+  console.log('   GET  /api/auditoria/estoque-grade     ?interno_est=1&data=YYYY-MM-DD\n');
 });
 
 // ════════════════════════════════════════════════════════════
